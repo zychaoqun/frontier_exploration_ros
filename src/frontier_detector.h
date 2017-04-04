@@ -1,7 +1,7 @@
 
 #include <iostream>
 #include <opencv2/highgui/highgui.hpp>
-
+#include <stdlib.h> 
 
 #include "g2o/core/hyper_graph.h"
 
@@ -20,6 +20,9 @@
 
 
 
+typedef std::vector<std::array<int,2>> coordVector;
+typedef std::vector<coordVector> regionVector;
+
 class FrontierDetector {
 
 public:
@@ -28,15 +31,32 @@ public:
 	void computeFrontiers();
 	void rankFrontiers();
 
+	coordVector getFrontierPoints();
+	regionVector getFrontierRegions();
+
 
 
 
 
 
 protected:
+
+	bool hasNeighbor(std::array<int,2> coordI, std::array<int,2> coordJ);
+	bool included(std::array<int,2> coord , regionVector regions);
+
+
+
+	//Is neighbor inline private method
+
 	cv::Mat _mapImage;
 	int _sizeThreshold;
 
+	int _freeColor = 255;
+	int _occupiedColor = 0;
+	int _unknownColor = 127;
+
+	coordVector _frontiers;
+	regionVector _regions;
 
 
 
