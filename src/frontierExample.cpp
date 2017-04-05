@@ -32,9 +32,11 @@ Mat map = imread(mapPath, CV_LOAD_IMAGE_UNCHANGED);
 ros::init(argc, argv, "frontier_detector");
 
 
-string topic = "points";
+string topicPoints = "points";
+string topicMarkers = "visualization_markers";
+float resolution = 0.05;
 
-FrontierDetector frontiersDetector(map, topic , 40,11);
+FrontierDetector frontiersDetector(map, resolution, topicPoints, topicMarkers , 40,10); //40,11
 
 frontiersDetector.computeFrontiers();
 coordVector points = frontiersDetector.getFrontierPoints();
@@ -80,12 +82,14 @@ imwrite("image.jpg", regionsMap);
 waitKey(0);  
 
 */
+imwrite("points.jpg",frontierMap);
+imwrite("regions.jpg", regionsMap);
 
 ros::Rate loop_rate(10);
 while (ros::ok()){
 
  	frontiersDetector.publishFrontierPoints();
-
+ 	frontiersDetector.publishCentroidMarkers();
  	loop_rate.sleep();
 
  	}

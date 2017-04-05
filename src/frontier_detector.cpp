@@ -2,15 +2,17 @@
 
 using namespace sensor_msgs;
 
-FrontierDetector::FrontierDetector (cv::Mat image, std::string name, int thresholdSize, int thresholdNeighbors){
+FrontierDetector::FrontierDetector (cv::Mat image, float resolution, std::string namePoints, std::string nameMarkers, int thresholdSize, int thresholdNeighbors){
 
 	_mapImage = image;
+	_mapResolution = resolution;
 	_sizeThreshold = thresholdSize;
 	_neighborsThreshold = thresholdNeighbors;
-	_topicPointsName = name;
+	_topicPointsName = namePoints;
+	_topicMarkersName = nameMarkers;
 
 	_pubFrontierPoints = _nh.advertise<sensor_msgs::PointCloud2>(_topicPointsName,1);
-
+	_pubCentroidMarkers = _nh.advertise<visualization_msgs::MarkerArray>( _topicMarkersName,1);
 
 }
 
@@ -83,6 +85,9 @@ void FrontierDetector::computeFrontiers(){
 
 void FrontierDetector::rankRegions(){
 	//Reorder the _regions vector
+	//Assign a score to each region, according to its dimension and the number of close regions...
+	//Weight the score according to the distance 
+	//Move toward best centroid.
 }
 
 
@@ -110,8 +115,8 @@ void FrontierDetector::publishFrontierPoints(){
 	sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(*pointsMsg, "b");
 
 	for (int i = 0; i < _frontiers.size(); i++, ++iter_x, ++iter_y, ++iter_z,  ++iter_r, ++iter_g, ++iter_b){
-		*iter_x = _frontiers[i][0];
-		*iter_y = _frontiers[i][1];
+		*iter_x = _frontiers[i][0]*_mapResolution;
+		*iter_y = _frontiers[i][1]*_mapResolution;
 		*iter_z = 0;
 
 		*iter_r = 1;
@@ -123,6 +128,43 @@ void FrontierDetector::publishFrontierPoints(){
 	
 	_pubFrontierPoints.publish(pointsMsg);
 
+
+}
+
+
+void FrontierDetector::publishCentroidMarkers(){
+	visualization_msgs::MarkerArray markersMsg;
+
+	floatCoordVector centroids = computeCentroids();
+
+
+	for (int i = 0; i < centroids.size(); i++){
+		visualization_msgs::Marker marker;
+		marker.header.frame_id = "map";
+		marker.header.stamp = ros::Time();
+		//marker.ns = "my_namespace";
+		marker.id = i;
+		marker.type = visualization_msgs::Marker::SPHERE;
+		marker.action = visualization_msgs::Marker::ADD;
+		marker.pose.position.x = centroids[i][0]*_mapResolution;
+		marker.pose.position.y = centroids[i][1]*_mapResolution;
+		marker.pose.position.z = 0;
+		marker.pose.orientation.x = 0.0;
+		marker.pose.orientation.y = 0.0;
+		marker.pose.orientation.z = 0.0;
+		marker.pose.orientation.w = 1.0;
+		marker.scale.x = 0.4;
+		marker.scale.y = 0.4;
+		marker.scale.z = 0.4;
+		marker.color.a = 1.0; 
+		marker.color.r = 0.0;
+		marker.color.g = 1.0;
+		marker.color.b = 0.0;
+
+		markersMsg.markers.push_back(marker);
+	}
+
+	_pubCentroidMarkers.publish(markersMsg);
 
 }
 
