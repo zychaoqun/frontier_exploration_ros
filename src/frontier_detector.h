@@ -19,8 +19,10 @@
 #include "g2o/stuff/command_args.h"
 
 #include "ros/ros.h"
-#include "sensor_msgs/PointCloud.h"
 #include "geometry_msgs/Point32.h"
+#include "sensor_msgs/PointCloud2.h"
+#include "sensor_msgs/image_encodings.h"
+#include "sensor_msgs/point_cloud2_iterator.h"
 
 
 
@@ -31,7 +33,7 @@ typedef std::vector<coordVector> regionVector;
 class FrontierDetector {
 
 public:
-	FrontierDetector (cv::Mat image, std::string name = "points", int threhsold = 5);
+	FrontierDetector (cv::Mat image, std::string name = "points", int threhsoldSize = 5, int threhsoldNeighbors = 1);
 
 	void computeFrontiers();
 	void rankRegions();
@@ -52,12 +54,9 @@ protected:
 	bool hasNeighbor(std::array<int,2> coordI, std::array<int,2> coordJ);
 	bool included(std::array<int,2> coord , regionVector regions);
 
-
-
-	//Is neighbor inline private method
-
 	cv::Mat _mapImage;
 	int _sizeThreshold;
+	int _neighborsThreshold;
 
 	int _freeColor = 255;
 	int _occupiedColor = 0;

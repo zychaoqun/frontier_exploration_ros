@@ -1,13 +1,15 @@
 #include "frontier_detector.h"
 
+using namespace sensor_msgs;
 
-FrontierDetector::FrontierDetector (cv::Mat image, std::string name, int threshold){
+FrontierDetector::FrontierDetector (cv::Mat image, std::string name, int thresholdSize, int thresholdNeighbors){
 
 	_mapImage = image;
-	_sizeThreshold = threshold;
+	_sizeThreshold = thresholdSize;
+	_neighborsThreshold = thresholdNeighbors;
 	_topicPointsName = name;
 
-	_pubFrontierPoints = _nh.advertise<sensor_msgs::PointCloud>(_topicPointsName,1);
+	_pubFrontierPoints = _nh.advertise<sensor_msgs::PointCloud2>(_topicPointsName,1);
 
 
 }
@@ -86,32 +88,40 @@ void FrontierDetector::rankRegions(){
 
 void FrontierDetector::publishFrontierPoints(){
 
-	sensor_msgs::PointCloud pointsMsg;
+	sensor_msgs::PointCloud2Ptr pointsMsg = boost::make_shared<sensor_msgs::PointCloud2>();
+	
+	pointsMsg->header.frame_id = "map";
+	pointsMsg->is_bigendian = false;
+	pointsMsg->is_dense = false;
 
-	//header (uint32 seq, time stamp, string frame_id)
 
-	//points[] (float32 x, y, z)
-	//channels[] (string name, float32[] values)
-	for (int i = 0; i < _frontiers.size(); i++){
-		geometry_msgs::Point32 point;
-		point.x = _frontiers[i][0];
-		point.y = _frontiers[i][1];
-		point.z = 0;
+	pointsMsg->width = _frontiers.size();
+	pointsMsg->height = 1;
 
-		pointsMsg.points.push_back(point);
 
-		
-		sensor_msgs::ChannelFloat32 channel;
-		channel.name = "rgb";
-		channel.values.push_back(0);
-		channel.values.push_back(0);
-		channel.values.push_back(255);
+  	sensor_msgs::PointCloud2Modifier pcd_modifier(*pointsMsg);
+  	pcd_modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
 
-		pointsMsg.channels.push_back(channel);
-		}
+	sensor_msgs::PointCloud2Iterator<float> iter_x(*pointsMsg, "x");
+	sensor_msgs::PointCloud2Iterator<float> iter_y(*pointsMsg, "y");
+	sensor_msgs::PointCloud2Iterator<float> iter_z(*pointsMsg, "z");
+	sensor_msgs::PointCloud2Iterator<uint8_t> iter_r(*pointsMsg, "r");
+	sensor_msgs::PointCloud2Iterator<uint8_t> iter_g(*pointsMsg, "g");
+	sensor_msgs::PointCloud2Iterator<uint8_t> iter_b(*pointsMsg, "b");
+
+	for (int i = 0; i < _frontiers.size(); i++, ++iter_x, ++iter_y, ++iter_z,  ++iter_r, ++iter_g, ++iter_b){
+		*iter_x = _frontiers[i][0];
+		*iter_y = _frontiers[i][1];
+		*iter_z = 0;
+
+		*iter_r = 1;
+        *iter_g = 0;
+        *iter_b = 0;
+
+		} 
 
 	
-_pubFrontierPoints.publish(pointsMsg);
+	_pubFrontierPoints.publish(pointsMsg);
 
 
 }
@@ -156,7 +166,7 @@ regionVector FrontierDetector::getFrontierRegions(){
 bool FrontierDetector::hasNeighbor(std::array<int,2> coordI, std::array<int,2> coordJ){
 
 	if ((coordI[0] != coordJ[0]) || (coordI[1] != coordJ[1])){
-		if ((abs(coordI[0] - coordJ[0]) <= 1)&&(abs(coordI[1] - coordJ[1]) <= 1)){
+		if ((abs(coordI[0] - coordJ[0]) <= _neighborsThreshold)&&(abs(coordI[1] - coordJ[1]) <= _neighborsThreshold)){
 			return true; 								
 							}
 					}	
