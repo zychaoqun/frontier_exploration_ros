@@ -18,23 +18,31 @@
 
 #include "g2o/stuff/command_args.h"
 
+#include "ros/ros.h"
+#include "sensor_msgs/PointCloud.h"
+#include "geometry_msgs/Point32.h"
 
 
+
+typedef std::vector<std::array<float,2>> floatCoordVector;
 typedef std::vector<std::array<int,2>> coordVector;
 typedef std::vector<coordVector> regionVector;
 
 class FrontierDetector {
 
 public:
-	FrontierDetector (cv::Mat image, int threhsold = 3);
+	FrontierDetector (cv::Mat image, std::string name = "points", int threhsold = 5);
 
 	void computeFrontiers();
-	void rankFrontiers();
+	void rankRegions();
+	floatCoordVector computeCentroids();
 
 	coordVector getFrontierPoints();
 	regionVector getFrontierRegions();
 
 
+
+	void publishFrontierPoints();
 
 
 
@@ -57,6 +65,12 @@ protected:
 
 	coordVector _frontiers;
 	regionVector _regions;
+
+	std::string _topicPointsName;
+	ros::NodeHandle _nh;
+	ros::Publisher _pubFrontierPoints;
+
+
 
 
 
