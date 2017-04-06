@@ -128,15 +128,6 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules)
 set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
-# Find g2o
-FIND_PACKAGE(G2O REQUIRED)
-IF(G2O_FOUND)
-  SET(${PROJECT_NAME}_G2O_INCLUDE ${G2O_INCLUDE_DIR} CACHE PATH "Directory of G2O include")
-  SET(${PROJECT_NAME}_G2O_LIBRARY_PATH ${G2O_LIBRARY_PATH} CACHE PATH "Directory of G2O libraries")
-ELSE(G2O_FOUND)
-  SET(${PROJECT_NAME}_G2O_INCLUDE "" CACHE PATH "Directory of G2O include")
-ENDIF(G2O_FOUND)
-include_directories(${G2O_INCLUDE_DIR})
 
 # Find Eigen3
 FIND_PACKAGE(Eigen3 REQUIRED)
@@ -163,15 +154,7 @@ add_executable(frontierExample
 target_link_libraries(frontierExample
   ${catkin_LIBRARIES} 
   ${OpenCV_LIBS}
-  ${G2O_CORE_LIBRARY}
-#   ${G2O_OPENGL_HELPER_LIBRARY}
-   ${G2O_TYPES_DATA}
-   ${G2O_TYPES_SLAM2D}
-#   ${G2O_TYPES_SLAM3D}
-${G2O_STUFF_LIBRARY}
-   ${G2O_SOLVER_CSPARSE}
-   ${G2O_SOLVER_CSPARSE_EXTENSION}
-   ${CSPARSE_LIBRARY}
+
 )
 
 #############
