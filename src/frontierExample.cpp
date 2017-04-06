@@ -36,12 +36,12 @@ string topicPoints = "points";
 string topicMarkers = "visualization_markers";
 float resolution = 0.05;
 
-FrontierDetector frontiersDetector(map, resolution, topicPoints, topicMarkers , 40,10); //40,11
+FrontierDetector frontiersDetector(&map, resolution, topicPoints, topicMarkers , 40,10); 
 
 frontiersDetector.computeFrontiers();
 coordVector points = frontiersDetector.getFrontierPoints();
 regionVector regions = frontiersDetector.getFrontierRegions();
-floatCoordVector centroids = frontiersDetector.computeCentroids();
+coordVector centroids = frontiersDetector.computeCentroids();
 
 std::cout<< "Frontier Points: " << points.size() <<std::endl;
 std::cout<< "Frontier Regions: " << regions.size() <<std::endl; 

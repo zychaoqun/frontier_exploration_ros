@@ -2,7 +2,7 @@
 
 using namespace sensor_msgs;
 
-FrontierDetector::FrontierDetector (cv::Mat image, float resolution, std::string namePoints, std::string nameMarkers, int thresholdSize, int thresholdNeighbors){
+FrontierDetector::FrontierDetector (cv::Mat *image, float resolution, std::string namePoints, std::string nameMarkers, int thresholdSize, int thresholdNeighbors){
 
 	_mapImage = image;
 	_mapResolution = resolution;
@@ -27,22 +27,24 @@ void FrontierDetector::computeFrontiers(){
 	//4 Compute centroid of each region
 
 
+	_frontiers.clear();
+	_regions.clear();
 
 
-	for(int c = 0; c < _mapImage.cols; c++) {
-    	for(int r = 0; r < _mapImage.rows; r++) {
+	for(int c = 0; c < _mapImage->cols; c++) {
+    	for(int r = 0; r < _mapImage->rows; r++) {
 
-    		if (_mapImage.at<unsigned char>(r, c) == _freeColor ){ 
+    		if (_mapImage->at<unsigned char>(r, c) == _freeColor ){ 
 
-    			std::array<int,2> coord = {r,c};
+    			std::array<float,2> coord = {r,c};
 
-    			if (_mapImage.at<unsigned char>(r + 1, c) == _unknownColor ){ 
+    			if (_mapImage->at<unsigned char>(r + 1, c) == _unknownColor ){ 
     				_frontiers.push_back(coord);	}
-    			else if (_mapImage.at<unsigned char>(r - 1, c) == _unknownColor ) {
+    			else if (_mapImage->at<unsigned char>(r - 1, c) == _unknownColor ) {
     				_frontiers.push_back(coord);		}
-    			else if (_mapImage.at<unsigned char>(r, c + 1) == _unknownColor ) {
+    			else if (_mapImage->at<unsigned char>(r, c + 1) == _unknownColor ) {
     				_frontiers.push_back(coord);		}    			
-    			else if (_mapImage.at<unsigned char>(r, c - 1) == _unknownColor ) {
+    			else if (_mapImage->at<unsigned char>(r, c - 1) == _unknownColor ) {
     				_frontiers.push_back(coord);		}
     		
     						}
@@ -135,7 +137,7 @@ void FrontierDetector::publishFrontierPoints(){
 void FrontierDetector::publishCentroidMarkers(){
 	visualization_msgs::MarkerArray markersMsg;
 
-	floatCoordVector centroids = computeCentroids();
+	coordVector centroids = computeCentroids();
 
 
 	for (int i = 0; i < centroids.size(); i++){
@@ -146,8 +148,8 @@ void FrontierDetector::publishCentroidMarkers(){
 		marker.id = i;
 		marker.type = visualization_msgs::Marker::SPHERE;
 		marker.action = visualization_msgs::Marker::ADD;
-		marker.pose.position.x = centroids[i][0]*_mapResolution;
-		marker.pose.position.y = centroids[i][1]*_mapResolution;
+		marker.pose.position.x = centroids[i][0] * _mapResolution;
+		marker.pose.position.y = centroids[i][1] * _mapResolution;
 		marker.pose.position.z = 0;
 		marker.pose.orientation.x = 0.0;
 		marker.pose.orientation.y = 0.0;
@@ -169,9 +171,9 @@ void FrontierDetector::publishCentroidMarkers(){
 }
 
 
-floatCoordVector FrontierDetector::computeCentroids(){
+coordVector FrontierDetector::computeCentroids(){
 
-	floatCoordVector centroids;
+	coordVector centroids;
 
 	for (int i = 0; i < _regions.size(); i++){
 
@@ -205,7 +207,7 @@ regionVector FrontierDetector::getFrontierRegions(){
 	return _regions;	}
 
 
-bool FrontierDetector::hasNeighbor(std::array<int,2> coordI, std::array<int,2> coordJ){
+bool FrontierDetector::hasNeighbor(std::array<float,2> coordI, std::array<float,2> coordJ){
 
 	if ((coordI[0] != coordJ[0]) || (coordI[1] != coordJ[1])){
 		if ((abs(coordI[0] - coordJ[0]) <= _neighborsThreshold)&&(abs(coordI[1] - coordJ[1]) <= _neighborsThreshold)){
@@ -223,7 +225,7 @@ bool FrontierDetector::hasNeighbor(std::array<int,2> coordI, std::array<int,2> c
 		return false;*/
 }
 
-bool FrontierDetector::included(std::array<int,2> coord , regionVector regions){
+bool FrontierDetector::included(std::array<float,2> coord , regionVector regions){
 	for (int i = 0; i < _regions.size(); i++){
 		for (int j = 0; j < _regions[i].size(); j++){
 			if (_regions[i][j] == coord){
